@@ -2,6 +2,7 @@ import glm
 
 from Renderer import Renderer
 import Shape
+from Texture import Texture
 
 def generate_shapes():
   global shapes
@@ -17,10 +18,11 @@ class RenderObject:
     self.renderer.create_program_from_files(self.program)
     self.shape: Shape.Shape = None
     self.modelMat = glm.mat4(1.0)
-    #??? implement texture
+    self.texture: Texture = None
 
   def draw(self):
     self.renderer.set_uniform("modelMat", self.modelMat)
+    self.texture.bind()
     self.shape.draw()
 
 class Cube(RenderObject):
