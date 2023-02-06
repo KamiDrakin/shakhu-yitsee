@@ -8,14 +8,25 @@ import RenderObject
 from Input import Input
 from Texture import Texture
 
-def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
+def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float, desHeight: float):
   dist = glm.distance(dest.xz, pos.xz)
-  if speed > glm.abs(dist - desDist):
-    speed = glm.abs(dist - desDist)
+  distDiff = glm.abs(dist - desDist)
+  hSpeed = speed * distDiff ** 2
+  if hSpeed > distDiff:
+    hSpeed = distDiff
   if desDist < dist:
-    pos.xz += speed * glm.normalize(dest.xz - pos.xz)
-  elif desDist > glm.distance(dest, pos):
-    pos.xz += speed * glm.normalize(pos.xz - dest.xz)
+    pos.xz += hSpeed * glm.normalize(dest.xz - pos.xz)
+  elif desDist > dist:
+    pos.xz += hSpeed * glm.normalize(pos.xz - dest.xz)
+  height = pos.y - dest.y
+  heightDiff = glm.abs(height - desHeight)
+  vSpeed = speed * heightDiff ** 2
+  if vSpeed > heightDiff:
+    vSpeed = heightDiff
+  if desHeight < height:
+    pos.y -= vSpeed
+  elif desHeight > height:
+    pos.y += vSpeed
 
 def main():
   screenSize: (int) = (800, 600)
@@ -90,8 +101,7 @@ def main():
     if Input.is_held(glfw.KEY_KP_2):
       camPos.z -= speed
 
-    follow_behind(camPos, playerPos, 0.1, 3)
-    camPos.y = playerPos.y + 1.5
+    follow_behind(camPos, playerPos, 0.05, 3, 1.5)
 
     renderManager.camPos = camPos
     viewMat = glm.lookAt(
