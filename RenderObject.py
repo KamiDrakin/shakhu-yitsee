@@ -17,8 +17,8 @@ class RenderObject:
     self.renderer = renderer
     self.renderer.create_program_from_files(self.program)
     self.shape: Shape.Shape = None
-    self.modelMat = glm.mat4(1.0)
     self.texture: Texture = None
+    self.modelMat = glm.mat4(1.0)
 
   def draw(self):
     self.renderer.set_uniform("modelMat", self.modelMat)

@@ -26,6 +26,7 @@ class RenderManager:
       glBindVertexArray(vao)
       for program in self.loadedObjs[vao]:
         self.renderer.swap_program(program)
+        self.renderer.set_uniform("projMat", self.renderer.projMat)
         objs: list[RenderObject] = self.loadedObjs[vao][program]
         for obj in objs:
           if glm.distance(glm.vec3(obj.modelMat[3]), self.camPos) > renderDistance:

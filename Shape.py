@@ -35,9 +35,9 @@ class Square(Shape):
     glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
     glBufferData(GL_ARRAY_BUFFER, numpy.array(sMod.squareFull, dtype='float32'), GL_STATIC_DRAW)
     glEnableVertexAttribArray(0)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), c_void_p(0))
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), c_void_p(0))
     glEnableVertexAttribArray(1)
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), c_void_p(3 * sizeof(GLfloat)))
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), c_void_p(3 * sizeof(GLfloat)))
     glBindBuffer(GL_ARRAY_BUFFER, 0)
     glBindVertexArray(0)
 
