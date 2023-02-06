@@ -19,9 +19,11 @@ class RenderObject:
     self.shape: Shape.Shape = None
     self.texture: Texture = None
     self.modelMat = glm.mat4(1.0)
+    self.projId = 0
 
   def draw(self):
     self.renderer.set_uniform("modelMat", self.modelMat)
+    self.renderer.set_uniform("projMat", self.renderer.screenSizer.get_projection(self.projId))
     self.texture.bind()
     self.shape.draw()
 

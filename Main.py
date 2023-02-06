@@ -8,9 +8,19 @@ import RenderObject
 from Input import Input
 from Texture import Texture
 
+def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
+  dist = glm.distance(dest.xz, pos.xz)
+  if speed > glm.abs(dist - desDist):
+    speed = glm.abs(dist - desDist)
+  if desDist < dist:
+    pos.xz += speed * glm.normalize(dest.xz - pos.xz)
+  elif desDist > glm.distance(dest, pos):
+    pos.xz += speed * glm.normalize(pos.xz - dest.xz)
+
 def main():
   screenSize: (int) = (800, 600)
   renderer: Renderer = Renderer(screenSize)
+  renderer.screenSizer.update_projections(screenSize)
   renderManager: RenderManager = RenderManager(renderer)
   RenderObject.generate_shapes()
 
@@ -75,19 +85,18 @@ def main():
       camPos.x += speed
     if Input.is_held(glfw.KEY_KP_6):
       camPos.x -= speed
-    if Input.is_held(glfw.KEY_KP_7):
-      camPos.y += speed
-    if Input.is_held(glfw.KEY_KP_1):
-      camPos.y -= speed
     if Input.is_held(glfw.KEY_KP_8):
       camPos.z += speed
     if Input.is_held(glfw.KEY_KP_2):
       camPos.z -= speed
 
+    follow_behind(camPos, playerPos, 0.1, 3)
+    camPos.y = playerPos.y + 1.5
+
     renderManager.camPos = camPos
     viewMat = glm.lookAt(
       camPos,
-      playerPos,
+      playerPos + glm.vec3(0, 0.5, 0),
       glm.vec3(0, 1, 0)
     )
     renderer.swap_program("simple3D")

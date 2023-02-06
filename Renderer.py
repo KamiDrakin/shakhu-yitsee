@@ -4,37 +4,56 @@ import glm
 
 shaderDir = "shaders/"
 
-fov = 60
-near = 0.1
-far = 100
-
 class Program:
   def __init__(self, ID: int):
     self.ID: int = ID
     self.uniforms: dict[str, int] = {}
 
-class Renderer:
-  windowSizeChangeFlag: bool = False
+class ScreenSizer:
+  fov = 60
+  near = 0.1
+  far = 100
 
+  def __init__(self, size: tuple[int]):
+    self.projMats: dict[int, glm.mat4] = {}
+    self.update_projections(size)
+
+  def update_projections(self, size: tuple[int]):
+    self.projMats = {
+      0: glm.perspective(glm.radians(self.fov), size[0] / size[1], self.near, self.far),
+      1: glm.ortho(0, size[0], 0, size[1], self.near, self.far)
+    }
+
+  def get_projection(self, type: int) -> glm.mat4:
+    return self.projMats[type]
+
+  def frame_buffer_size_callback(self, window, width, height):
+    if width != 0 and height != 0:
+      glViewport(0, 0, width, height)
+      self.update_projections((width, height))
+
+class Renderer:
   def __init__(self, size: tuple[int]):
     self.programs: dict[str, Program] = {}
     self.currentProgram: str = ""
+
+    self.screenSizer = ScreenSizer(size)
+
     glfw.init()
     glfw.window_hint(glfw.SAMPLES, 4)
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 6)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-    glfw.window_hint(glfw.RESIZABLE, False)
+    #glfw.window_hint(glfw.RESIZABLE, False)
     
     self.window = glfw.create_window(size[0], size[1], "AAAA", None, None)
     glfw.make_context_current(self.window)
     glfw.swap_interval(1)
-    glfw.set_framebuffer_size_callback(self.window, self.frame_buffer_size_callback)
-    
+
+    glfw.set_framebuffer_size_callback(self.window, self.screenSizer.frame_buffer_size_callback)
+
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_MULTISAMPLE)
-    
-    self.update_projection(size[0], size[1])
 
   def create_program_from_files(self, name: str):
     if name in self.programs:
@@ -86,11 +105,3 @@ class Renderer:
     if name not in currProgram.uniforms.keys():
       currProgram.uniforms[name] = glGetUniformLocation(currProgram.ID, name)
     glUniformMatrix4fv(currProgram.uniforms[name], 1, GL_FALSE, glm.value_ptr(value))
-
-  def update_projection(self, width: float, height: float):
-    self.projMat = glm.perspective(glm.radians(fov), width / height, near, far)
-
-  def frame_buffer_size_callback(self, window, width, height):
-    if width != 0 and height != 0:
-      glViewport(0, 0, width, height)
-      self.update_projection(width, height)
