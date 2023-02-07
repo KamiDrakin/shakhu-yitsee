@@ -19,11 +19,9 @@ class RenderObject:
     self.shape: Shape.Shape = None
     self.texture: Texture = None
     self.modelMat = glm.mat4(1.0)
-    self.projId = 0
 
   def draw(self):
     self.renderer.set_uniform("modelMat", self.modelMat)
-    self.renderer.set_uniform("projMat", self.renderer.screenSizer.get_projection(self.projId))
     self.texture.bind()
     self.shape.draw()
 
@@ -40,4 +38,9 @@ class Square3D(RenderObject):
 class SquareBB(RenderObject):
   def __init__(self, renderer: Renderer):
     super().__init__(renderer, "billboard")
+    self.shape = shapes["square"]
+
+class SquareUI(RenderObject):
+  def __init__(self, renderer: Renderer):
+    super().__init__(renderer, "ui")
     self.shape = shapes["square"]

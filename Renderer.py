@@ -21,7 +21,7 @@ class ScreenSizer:
   def update_projections(self, size: tuple[int]):
     self.projMats = {
       0: glm.perspective(glm.radians(self.fov), size[0] / size[1], self.near, self.far),
-      1: glm.ortho(0, size[0], 0, size[1], self.near, self.far)
+      1: glm.ortho(0, size[0], 0, size[1], 0, 100)
     }
 
   def get_projection(self, type: int) -> glm.mat4:
@@ -52,7 +52,6 @@ class Renderer:
 
     glfw.set_framebuffer_size_callback(self.window, self.screenSizer.frame_buffer_size_callback)
 
-    glEnable(GL_DEPTH_TEST)
     glEnable(GL_MULTISAMPLE)
 
   def create_program_from_files(self, name: str):

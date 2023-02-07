@@ -48,65 +48,78 @@ def main():
     renderManager.add_object(cube)
     cube.modelMat = glm.translate(cube.modelMat, glm.vec3(i, 0, 0))
     cube.texture = grapesTex
+
   square = RenderObject.Square3D(renderer)
   square.modelMat = glm.translate(square.modelMat, glm.vec3(0, 0, 2))
   square.modelMat = glm.scale(square.modelMat, glm.vec3(100, 100, 1))
   square.texture = grapesTex
   renderManager.add_object(square)
+
   bbSquare = RenderObject.SquareBB(renderer)
   bbSquare.modelMat = glm.translate(bbSquare.modelMat, glm.vec3(0, 1, 0))
   bbSquare.texture = grapesTex
   renderManager.add_object(bbSquare)
 
-  #projMat = renderer.projMat
+  grapeOverlord = RenderObject.SquareUI(renderer)
+  grapeOverlord.modelMat = glm.translate(glm.scale(glm.mat4(1), glm.vec3(800, 600, 1)), glm.vec3(0.5, 0.5, 0))
+  grapeOverlord.texture = grapesTex
+  renderManager.add_object(grapeOverlord, 0)
+
   viewMat = glm.mat4(1)
   
   renderer.swap_program("simple3D")
-  #renderer.set_uniform("projMat", projMat)
   renderer.set_uniform("viewMat", viewMat)
 
   renderer.swap_program("billboard")
-  #renderer.set_uniform("projMat", projMat)
   renderer.set_uniform("viewMat", viewMat)
 
   camPos = glm.vec3(0, 0, -3)
+  camTarget = glm.vec3(0, 2, 0)
   playerPos = glm.vec3(0, 1, 0)
 
   frame: int = 0
   while not glfw.window_should_close(renderer.window):
     Input.update()
 
-    speed = 0.2
+    follow_behind(camTarget, playerPos, 0.1, 0, 0.5)
+    camDir = glm.normalize(camPos - camTarget)
+    camRight = glm.normalize(glm.cross(glm.vec3(0, 1, 0), camDir))
+    camUp = glm.normalize(glm.cross(camDir, camRight))
+    camForward = glm.normalize(glm.cross(camRight, camDir))
+    playerRight = glm.normalize(camRight.xz)
+    playerForward = glm.normalize(camForward.xz)
+    speed = 0.1
+
     if Input.is_held(glfw.KEY_A):
-      playerPos.x += speed
+      playerPos.xz -= speed * playerRight
     if Input.is_held(glfw.KEY_D):
-      playerPos.x -= speed
+      playerPos.xz += speed * playerRight
     if Input.is_held(glfw.KEY_Q):
       playerPos.y += speed
     if Input.is_held(glfw.KEY_E):
       playerPos.y -= speed
     if Input.is_held(glfw.KEY_W):
-      playerPos.z += speed
+      playerPos.xz -= speed * playerForward
     if Input.is_held(glfw.KEY_S):
-      playerPos.z -= speed
+      playerPos.xz += speed * playerForward
     
     bbSquare.modelMat = glm.translate(glm.mat4(1), playerPos)
 
     if Input.is_held(glfw.KEY_KP_4):
-      camPos.x += speed
+      camPos += speed * camRight
     if Input.is_held(glfw.KEY_KP_6):
-      camPos.x -= speed
+      camPos -= speed * camRight
     if Input.is_held(glfw.KEY_KP_8):
-      camPos.z += speed
+      camPos -= speed * camUp
     if Input.is_held(glfw.KEY_KP_2):
-      camPos.z -= speed
+      camPos += speed * camUp
 
     follow_behind(camPos, playerPos, 0.05, 3, 1.5)
 
     renderManager.camPos = camPos
     viewMat = glm.lookAt(
       camPos,
-      playerPos + glm.vec3(0, 0.5, 0),
+      camTarget,
       glm.vec3(0, 1, 0)
     )
     renderer.swap_program("simple3D")
@@ -117,6 +130,7 @@ def main():
 
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
+    glEnable(GL_DEPTH_TEST)
     renderManager.draw_all_objects()
 
     glfw.swap_buffers(renderer.window)
