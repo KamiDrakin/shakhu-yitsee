@@ -12,10 +12,11 @@ class Program:
 class ScreenSizer:
   fov = 60
   near = 0.1
-  far = 100
+  far = 64
 
   def __init__(self, size: tuple[int]):
     self.projMats: dict[int, glm.mat4] = {}
+    self.size = size
     self.update_projections(size)
 
   def update_projections(self, size: tuple[int]):
@@ -31,6 +32,7 @@ class ScreenSizer:
     if width != 0 and height != 0:
       glViewport(0, 0, width, height)
       self.update_projections((width, height))
+      self.size = (width, height)
 
 class Renderer:
   def __init__(self, size: tuple[int]):
