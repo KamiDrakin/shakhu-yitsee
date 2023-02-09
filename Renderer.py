@@ -1,8 +1,14 @@
 from OpenGL.GL import *
 import glfw
 import glm
+from typing import Any
 
 shaderDir = "shaders/"
+
+uniformTypes = {
+  glm.mat4: lambda x, y: glUniformMatrix4fv(x, 1, GL_FALSE, glm.value_ptr(y)),
+  glm.vec4: lambda x, y: glUniform4fv(x, 1, glm.value_ptr(y))
+}
 
 class Program:
   def __init__(self, ID: int):
@@ -101,8 +107,10 @@ class Renderer:
     glUseProgram(self.programs[name].ID)
     self.currentProgram = name
 
-  def set_uniform(self, name: str, value: glm.mat4):
-    currProgram: Program = self.programs[self.currentProgram]
-    if name not in currProgram.uniforms.keys():
+  def define_uniform(self, name: str):
+    currProgram = self.programs[self.currentProgram]
+    if name not in currProgram.uniforms:
       currProgram.uniforms[name] = glGetUniformLocation(currProgram.ID, name)
-    glUniformMatrix4fv(currProgram.uniforms[name], 1, GL_FALSE, glm.value_ptr(value))
+
+  def set_uniform(self, name: str, value: Any):
+    uniformTypes[type(value)](self.programs[self.currentProgram].uniforms[name], value)

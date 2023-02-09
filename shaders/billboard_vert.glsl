@@ -7,7 +7,6 @@ uniform mat4 modelMat;
 layout (location = 0) in vec3 inVert;
 layout (location = 1) in vec2 vTexCoord;
 
-out vec4 vertColor;
 out vec2 texCoord;
 
 void main() {
@@ -17,6 +16,5 @@ void main() {
   glob_mat[1].xyz = vec3(0.0, d, 0.0);
   glob_mat[2].xyz = vec3(0.0, 0.0, d);
   gl_Position = projMat * glob_mat * vec4(inVert, 1.0);
-  vertColor = vec4(0.0, 1.0, 0.0, 1.0);
   texCoord = vTexCoord;
 }

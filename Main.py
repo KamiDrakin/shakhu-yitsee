@@ -78,9 +78,14 @@ def main():
   
   renderer.swap_program("simple3D")
   renderer.set_uniform("viewMat", viewMat)
+  renderer.set_uniform("colorFilter", glm.vec4(1, 0, 1, 1))
 
   renderer.swap_program("billboard")
   renderer.set_uniform("viewMat", viewMat)
+  renderer.set_uniform("colorFilter", glm.vec4(1, 0, 1, 1))
+
+  renderer.swap_program("ui")
+  renderer.set_uniform("colorFilter", glm.vec4(1, 0, 1, 1))
 
   camPos = glm.vec3(0, 0, -3)
   camHeight = 1.5

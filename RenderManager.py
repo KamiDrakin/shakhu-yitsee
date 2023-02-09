@@ -4,7 +4,7 @@ import glm
 from Renderer import Renderer
 from RenderObject import RenderObject
 
-maxObjsPerVao = 128
+maxObjsPerVao = 1024
 renderDistance = 64
 
 class VAO:
@@ -58,11 +58,10 @@ class RenderManager:
           toRender = maxObjs
           if toRender < 0:
             toRender = 0
-          print("VAO limit exceeded.")
         else:
           maxObjs -= toRender
         for i in range(toRender):
           obj = objs[i]
-          if id == 1 and glm.distance(glm.vec3(obj.modelMat[3]), self.camPos) > renderDistance:
+          if id == 1 and (glm.distance(glm.vec3(obj.modelMat[3]), self.camPos) > renderDistance):
             continue
           obj.draw()
