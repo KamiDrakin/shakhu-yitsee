@@ -72,6 +72,7 @@ def main():
   renderer.swap_program("simple3D")
   renderer.set_uniform("viewMat", viewMat)
   renderer.set_uniform("colorFilter", glm.vec4(1, 0, 1, 1))
+  renderer.set_uniform("texOffsetScale", glm.vec4(0.5, 0.5, 0.5, 0.5))
 
   renderer.swap_program("billboard")
   renderer.set_uniform("viewMat", viewMat)
@@ -128,17 +129,17 @@ def main():
 
     camMoved = False
     if Input.is_held(glfw.KEY_Q):
-      camPos += speed * camRight
+      camPos += speed * 2 * camRight
       camMoved = True
     if Input.is_held(glfw.KEY_E):
-      camPos -= speed * camRight
+      camPos -= speed * 2 * camRight
       camMoved = True
     if Input.is_held(glfw.KEY_R):
       if glm.acos(glm.dot(camUp, glm.vec3(playerForward.x, 0, playerForward.y))) > glm.pi() / 4:
-        camPos -= speed * camUp
+        camPos -= speed * 2 * camUp
     if Input.is_held(glfw.KEY_F):
       if glm.acos(glm.dot(camUp, glm.vec3(playerForward.x, 0, playerForward.y))) < glm.pi() * 3 / 4:
-        camPos += speed * camUp
+        camPos += speed * 2 * camUp
 
     if playerMovement != glm.vec2(0):
       playerPos.xz += speed * glm.normalize(playerMovement)
@@ -147,7 +148,7 @@ def main():
     
     bbSquare.modelMat = glm.translate(glm.mat4(1), playerPos)
       
-    camTarget.y = playerPos.y
+    camTarget.y = playerPos.y + 0.5
     follow_behind(camTarget, playerPos, 0.2, 0)
     follow_behind(camPos, camTarget, 1, 3)
     
