@@ -8,25 +8,16 @@ import RenderObject
 from Input import Input
 from Texture import Texture
 
-def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float, desHeight: float, acceleration: float = 2):
-  dist = glm.distance(dest.xz, pos.xz)
-  distDiff = glm.abs(dist - desDist)
-  hSpeed = speed * distDiff ** acceleration
-  if hSpeed > distDiff:
-    hSpeed = distDiff
-  if desDist < dist:
-    pos.xz += hSpeed * glm.normalize(dest.xz - pos.xz)
-  elif desDist > dist:
-    pos.xz += hSpeed * glm.normalize(pos.xz - dest.xz)
-  height = pos.y - dest.y
-  heightDiff = glm.abs(height - desHeight)
-  vSpeed = speed * heightDiff ** acceleration
-  if vSpeed > heightDiff:
-    vSpeed = heightDiff
-  if desHeight < height: 
-    pos.y -= vSpeed
-  elif desHeight > height:
-    pos.y += vSpeed
+def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
+  if speed > 1:
+    speed = 1
+  elif speed <= 0:
+    return
+  diff = dest - pos
+  if glm.length(diff.xz) == desDist and abs(diff.y) == glm.length(diff):
+    return
+  offset = desDist * glm.normalize(diff)
+  pos.xz += speed * (diff.xz - offset.xz)
 
 def main():
   screenSize: (int) = (800, 600)
@@ -69,10 +60,12 @@ def main():
   bbSquare.texture = grapesTex
   renderManager.add_object(bbSquare)
 
-  grapeOverlord = RenderObject.SquareUI(renderer)
-  grapeOverlord.modelMat = glm.translate(glm.scale(glm.mat4(1), glm.vec3(800, 600, 1)), glm.vec3(0.5, 0.5, 0))
-  grapeOverlord.texture = grapesTex
-  renderManager.add_object(grapeOverlord, 0)
+  grapeOverlords = [RenderObject.SquareUI(renderer) for _ in range(30)]
+  for i in range(len(grapeOverlords)):
+    grapeOverlord = grapeOverlords[i]
+    grapeOverlord.modelMat = glm.scale(glm.translate(glm.mat4(1), glm.vec3(400, 300, len(grapeOverlords) - i)), glm.vec3(800 / (1 + i), 600 / (1 + i), 0))
+    grapeOverlord.texture = grapesTex
+    renderManager.add_object(grapeOverlord, 0)
 
   viewMat = glm.mat4(1)
   
@@ -87,9 +80,8 @@ def main():
   renderer.swap_program("ui")
   renderer.set_uniform("colorFilter", glm.vec4(1, 0, 1, 1))
 
-  camPos = glm.vec3(0, 0, -3)
-  camHeight = 1.5
-  camTarget = glm.vec3(0, 2, 0)
+  camPos = glm.vec3(0, 2.5, -3)
+  camTarget = glm.vec3(0, 1.5, 0)
   playerPos = glm.vec3(0, 1, 0)
 
   frames = 0
@@ -109,47 +101,60 @@ def main():
       frames = 0
 
     speed = 5 * delta
-    follow_behind(camTarget, playerPos, 2 * speed, 0, 0.5)
+
     camDir = glm.normalize(camPos - camTarget)
     camRight = glm.normalize(glm.cross(glm.vec3(0, 1, 0), camDir))
     camUp = glm.normalize(glm.cross(camDir, camRight))
     playerRight = glm.normalize(camRight.xz)
-    playerForward = glm.normalize(glm.cross(camRight, glm.vec3(0, 1, 0)))
+    playerForward = glm.normalize(glm.cross(camRight, glm.vec3(0, 1, 0)).xz)
+
+    playerMovement = glm.vec2(0)
 
     if Input.is_held(glfw.KEY_A):
-      playerPos.xz -= speed * playerRight
+      playerMovement.xy -= playerRight
     if Input.is_held(glfw.KEY_D):
-      playerPos.xz += speed * playerRight
-    if Input.is_held(glfw.KEY_Q):
-      playerPos.y += speed
-    if Input.is_held(glfw.KEY_E):
-      playerPos.y -= speed
+      playerMovement.xy += playerRight
     if Input.is_held(glfw.KEY_W):
-      playerPos.xz -= speed * playerForward.xz
+      playerMovement.xy -= playerForward
     if Input.is_held(glfw.KEY_S):
-      playerPos.xz += speed * playerForward.xz
+      playerMovement.xy += playerForward
+    if Input.is_held(glfw.KEY_Z):
+      playerPos.y += speed
+    if Input.is_held(glfw.KEY_X):
+      playerPos.y -= speed
+
+    if playerMovement != glm.vec2(0):
+      playerPos.xz += speed * glm.normalize(playerMovement)
     
     bbSquare.modelMat = glm.translate(glm.mat4(1), playerPos)
 
-    if Input.is_held(glfw.KEY_KP_4):
+    if Input.is_held(glfw.KEY_Q):
       camPos += speed * camRight
-    if Input.is_held(glfw.KEY_KP_6):
+    if Input.is_held(glfw.KEY_E):
       camPos -= speed * camRight
-    if Input.is_held(glfw.KEY_KP_8):
-      #camPos -= speed * camUp
-      camHeight -= speed
-    if Input.is_held(glfw.KEY_KP_2):
-      #camPos += speed * camUp
-      camHeight += speed
-
-    if camHeight > 3:
-      camHeight = 3
-    if camHeight < -3:
-      camHeight = -3
-
-    follow_behind(camPos, camTarget, 2 * speed, 3, camHeight)
+    if Input.is_held(glfw.KEY_R):
+      if glm.acos(glm.dot(camUp, glm.vec3(playerForward.x, 0, playerForward.y))) > glm.pi() / 4:
+        camPos -= speed * camUp
+    if Input.is_held(glfw.KEY_F):
+      if glm.acos(glm.dot(camUp, glm.vec3(playerForward.x, 0, playerForward.y))) < glm.pi() * 3 / 4:
+        camPos += speed * camUp
+      
+    follow_behind(camTarget, playerPos, 0.2, 0)
+    follow_behind(camPos, camTarget, 1, 3)
     
-    grapeOverlord.modelMat = glm.translate(glm.scale(glm.mat4(1), glm.vec3(renderer.screenSizer.size[0], renderer.screenSizer.size[1], 1)), glm.vec3(0.5, 0.5, 0))
+    for i in range(len(grapeOverlords)):
+      grapeOverlord = grapeOverlords[i]
+      grapeOverlord.modelMat = glm.scale(
+        glm.translate(
+          glm.mat4(1),
+          glm.vec3(
+            renderer.screenSizer.size[0] / 2,
+            renderer.screenSizer.size[1] / 2,
+            i
+          )
+        ), 
+        glm.vec3(renderer.screenSizer.size[0] / (1 + i / 3) ** glm.sin(glfw.get_time()), renderer.screenSizer.size[1] / (1 + i / 3) ** glm.sin(glfw.get_time()), 1)
+      )
 
     renderManager.camPos = camPos
     viewMat = glm.lookAt(
@@ -163,11 +168,8 @@ def main():
     renderer.swap_program("billboard")
     renderer.set_uniform("viewMat", viewMat)
 
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-
-    glEnable(GL_DEPTH_TEST)
+    glClear(GL_COLOR_BUFFER_BIT)
     renderManager.draw_all_objects()
-
     glfw.swap_buffers(renderer.window)
     glfw.poll_events()
 

@@ -1,5 +1,4 @@
 import glm
-import random
 
 from Renderer import Renderer
 import Shape
@@ -20,6 +19,7 @@ class RenderObject:
     self.shape: Shape.Shape = None
     self.texture: Texture = None
     self.modelMat = glm.mat4(1.0)
+    self.colorFilter = glm.vec4(1.0)
     renderer.swap_program(program)
     renderer.define_uniform("modelMat")
     renderer.define_uniform("viewMat")
@@ -27,7 +27,7 @@ class RenderObject:
     renderer.define_uniform("colorFilter")
 
   def draw(self):
-    self.renderer.set_uniform("colorFilter", glm.vec4(random.randint(0, 1), random.randint(0, 1), random.randint(0, 1), 1))
+    self.renderer.set_uniform("colorFilter", self.colorFilter)
     self.renderer.set_uniform("modelMat", self.modelMat)
     self.texture.bind()
     self.shape.draw()
