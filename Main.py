@@ -108,6 +108,13 @@ def main():
     playerRight = glm.normalize(camRight.xz)
     playerForward = glm.normalize(glm.cross(camRight, glm.vec3(0, 1, 0)).xz)
 
+    if Input.is_held(glfw.KEY_Z):
+      playerPos.y += speed
+      camPos.y += speed
+    if Input.is_held(glfw.KEY_X):
+      playerPos.y -= speed
+      camPos.y -= speed
+
     playerMovement = glm.vec2(0)
 
     if Input.is_held(glfw.KEY_A):
@@ -118,27 +125,29 @@ def main():
       playerMovement.xy -= playerForward
     if Input.is_held(glfw.KEY_S):
       playerMovement.xy += playerForward
-    if Input.is_held(glfw.KEY_Z):
-      playerPos.y += speed
-    if Input.is_held(glfw.KEY_X):
-      playerPos.y -= speed
 
-    if playerMovement != glm.vec2(0):
-      playerPos.xz += speed * glm.normalize(playerMovement)
-    
-    bbSquare.modelMat = glm.translate(glm.mat4(1), playerPos)
-
+    camMoved = False
     if Input.is_held(glfw.KEY_Q):
       camPos += speed * camRight
+      camMoved = True
     if Input.is_held(glfw.KEY_E):
       camPos -= speed * camRight
+      camMoved = True
     if Input.is_held(glfw.KEY_R):
       if glm.acos(glm.dot(camUp, glm.vec3(playerForward.x, 0, playerForward.y))) > glm.pi() / 4:
         camPos -= speed * camUp
     if Input.is_held(glfw.KEY_F):
       if glm.acos(glm.dot(camUp, glm.vec3(playerForward.x, 0, playerForward.y))) < glm.pi() * 3 / 4:
         camPos += speed * camUp
+
+    if playerMovement != glm.vec2(0):
+      playerPos.xz += speed * glm.normalize(playerMovement)
+      if camMoved:
+        camPos.xz += speed * glm.normalize(playerMovement)
+    
+    bbSquare.modelMat = glm.translate(glm.mat4(1), playerPos)
       
+    camTarget.y = playerPos.y
     follow_behind(camTarget, playerPos, 0.2, 0)
     follow_behind(camPos, camTarget, 1, 3)
     
