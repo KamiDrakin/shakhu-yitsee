@@ -7,8 +7,9 @@ from RenderManager import RenderManager
 import RenderObject
 from Input import Input
 from Texture import Texture
+from AnimatedTexture import AnimatedTexture
 
-def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
+def follow_behind_xz(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
   if speed > 1:
     speed = 1
   elif speed <= 0:
@@ -18,6 +19,17 @@ def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
     return
   offset = desDist * glm.normalize(diff)
   pos.xz += speed * (diff.xz - offset.xz)
+
+def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
+  if speed > 1:
+    speed = 1
+  elif speed <= 0:
+    return
+  diff = dest - pos
+  if glm.length(diff) == desDist:
+    return
+  offset = desDist * glm.normalize(diff)
+  pos += speed * (diff - offset)
 
 def main():
   screenSize: (int) = (800, 600)
@@ -32,6 +44,7 @@ def main():
   glClearColor(0x22 / 0xff, 0x00 / 0xff, 0x00 / 0xff, 1)
 
   grapesTex = Texture("grapes.bmp")
+  catTex = AnimatedTexture("catGroove.bmp", (6, 7))
 
   cubes = [[RenderObject.Cube(renderer) for _ in range(10)] for _ in range(10)]
   for z in range(len(cubes)):
@@ -55,9 +68,10 @@ def main():
   square2.texture = grapesTex
   renderManager.add_object(square2)
 
+  animIndex = 0
   bbSquare = RenderObject.SquareBB(renderer)
   bbSquare.modelMat = glm.translate(bbSquare.modelMat, glm.vec3(0, 1, 0))
-  bbSquare.texture = grapesTex
+  bbSquare.texture = catTex
   renderManager.add_object(bbSquare)
 
   grapeOverlords = [RenderObject.SquareUI(renderer) for _ in range(30)]
@@ -84,6 +98,8 @@ def main():
   camPos = glm.vec3(0, 2.5, -3)
   camTarget = glm.vec3(0, 1.5, 0)
   playerPos = glm.vec3(0, 1, 0)
+
+  glfw.show_window(renderer.window)
 
   frames = 0
   totalTime = 0
@@ -135,10 +151,14 @@ def main():
       camPos -= speed * 2 * camRight
       camMoved = True
     if Input.is_held(glfw.KEY_R):
-      if glm.acos(glm.dot(camUp, glm.vec3(playerForward.x, 0, playerForward.y))) > glm.pi() / 4:
+      if camPos.y <= camTarget.y - 2.5:
+        camPos.y = camTarget.y - 2.5
+      else:
         camPos -= speed * 2 * camUp
     if Input.is_held(glfw.KEY_F):
-      if glm.acos(glm.dot(camUp, glm.vec3(playerForward.x, 0, playerForward.y))) < glm.pi() * 3 / 4:
+      if camPos.y >= camTarget.y + 2.5:
+        camPos.y = camTarget.y + 2.5
+      else:
         camPos += speed * 2 * camUp
 
     if playerMovement != glm.vec2(0):
@@ -148,12 +168,12 @@ def main():
     
     bbSquare.modelMat = glm.translate(glm.mat4(1), playerPos)
       
-    camTarget.y = playerPos.y + 0.5
-    follow_behind(camTarget, playerPos, 0.2, 0)
-    follow_behind(camPos, camTarget, 1, 3)
+    follow_behind(camTarget, playerPos + glm.vec3(0, 0.5, 0), delta * 20, 0)
+    follow_behind_xz(camPos, camTarget, 1, 3)
     
     for i in range(len(grapeOverlords)):
       grapeOverlord = grapeOverlords[i]
+      grapeOverlord.colorFilter = glm.vec4(0.75 + glm.sin(glfw.get_time()) / 4, 0.75 + glm.cos(glfw.get_time()) / 4, 0.75 - glm.sin(glfw.get_time()) / 4, 1)
       grapeOverlord.modelMat = glm.scale(
         glm.translate(
           glm.mat4(1),
@@ -165,6 +185,9 @@ def main():
         ), 
         glm.vec3(renderer.screenSizer.size[0] / (1 + i / 3) ** glm.sin(glfw.get_time()), renderer.screenSizer.size[1] / (1 + i / 3) ** glm.sin(glfw.get_time()), 1)
       )
+    
+    animIndex += 20 * delta
+    bbSquare.texOffsetScale = catTex.get_square(int(animIndex) % catTex.frameCount)
 
     renderManager.camPos = camPos
     viewMat = glm.lookAt(

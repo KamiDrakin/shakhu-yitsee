@@ -20,8 +20,7 @@ class RenderObject:
     self.texture: Texture = None
     self.modelMat = glm.mat4(1.0)
     self.colorFilter = glm.vec4(1.0)
-    self.texOffset = glm.vec2(0, 0)
-    self.texScale = glm.vec2(1, 1)
+    self.texOffsetScale = glm.vec4(0, 0, 1, 1)
     renderer.swap_program(program)
     renderer.define_uniform("modelMat")
     renderer.define_uniform("viewMat")
@@ -32,7 +31,7 @@ class RenderObject:
   def draw(self):
     self.renderer.set_uniform("modelMat", self.modelMat)
     self.renderer.set_uniform("colorFilter", self.colorFilter)
-    self.renderer.set_uniform("texOffsetScale", glm.vec4(self.texOffset, self.texScale))
+    self.renderer.set_uniform("texOffsetScale", self.texOffsetScale)
     self.texture.bind()
     self.shape.draw()
 

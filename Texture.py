@@ -1,6 +1,7 @@
 from OpenGL.GL import *
 from PIL import Image, ImageOps
 import numpy
+import glm
 
 texDir = "textures/"
 

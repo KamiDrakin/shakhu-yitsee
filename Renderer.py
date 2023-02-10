@@ -52,6 +52,7 @@ class Renderer:
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 6)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+    glfw.window_hint(glfw.VISIBLE, False)
     #glfw.window_hint(glfw.RESIZABLE, False)
     
     self.window = glfw.create_window(size[0], size[1], "AAAA", None, None)
