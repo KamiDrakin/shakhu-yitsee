@@ -7,29 +7,21 @@ from RenderManager import RenderManager
 import RenderObject
 from Input import Input
 from Texture import Texture
-from AnimatedTexture import AnimatedTexture
+from SheetTexture import SheetTexture
 
-def follow_behind_xz(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
-  if speed > 1:
-    speed = 1
-  elif speed <= 0:
-    return
+def follow_behind_xz(pos: glm.vec3, dest: glm.vec3, desDist: float) -> glm.vec2:
   diff = dest - pos
   if glm.length(diff.xz) == desDist and abs(diff.y) == glm.length(diff):
-    return
+    return glm.vec2(0)
   offset = desDist * glm.normalize(diff)
-  pos.xz += speed * (diff.xz - offset.xz)
+  return diff.xz - offset.xz
 
-def follow_behind(pos: glm.vec3, dest: glm.vec3, speed: float, desDist: float):
-  if speed > 1:
-    speed = 1
-  elif speed <= 0:
-    return
+def follow_behind(pos: glm.vec3, dest: glm.vec3, desDist: float) -> glm.vec3:
   diff = dest - pos
   if glm.length(diff) == desDist:
-    return
+    return glm.vec3(0)
   offset = desDist * glm.normalize(diff)
-  pos += speed * (diff - offset)
+  return diff - offset
 
 def main():
   screenSize: (int) = (800, 600)
@@ -44,7 +36,8 @@ def main():
   glClearColor(0x22 / 0xff, 0x00 / 0xff, 0x00 / 0xff, 1)
 
   grapesTex = Texture("grapes.bmp")
-  catTex = AnimatedTexture("catGroove.bmp", (6, 7))
+  catTex = SheetTexture("catGroove.bmp", (6, 7))
+  fontTex = SheetTexture("font.bmp", (26, 3))
 
   cubes = [[RenderObject.Cube(renderer) for _ in range(10)] for _ in range(10)]
   for z in range(len(cubes)):
@@ -73,6 +66,27 @@ def main():
   bbSquare.modelMat = glm.translate(bbSquare.modelMat, glm.vec3(0, 1, 0))
   bbSquare.texture = catTex
   renderManager.add_object(bbSquare)
+
+  letters: list[RenderObject.SquareUI] = []
+  text = (0, 12, 14, 6, 20, 18)
+  colors = (
+    glm.vec3(1, 0, 0.5),
+    glm.vec3(0, 1, 0),
+    glm.vec3(0.5, 0, 1),
+    glm.vec3(1, 0, 0),
+    glm.vec3(0, 0.5, 1),
+    glm.vec3(0, 1, 0.5)
+  )
+  for i in range(len(text)):
+    index = text[i]
+    letter = RenderObject.SquareUI(renderer)
+    letters.append(letter)
+    letter.modelMat = glm.translate(letter.modelMat, glm.vec3(64 + 32 * i, 64, 0))
+    letter.modelMat = glm.scale(letter.modelMat, glm.vec3(32, 32, 1))
+    letter.texture = fontTex
+    letter.colorFilter = glm.vec4(colors[i], 1)
+    letter.texOffsetScale = letter.texture.get_square(index)
+    renderManager.add_object(letter, 2)
 
   grapeOverlords = [RenderObject.SquareUI(renderer) for _ in range(30)]
   for i in range(len(grapeOverlords)):
@@ -168,8 +182,8 @@ def main():
     
     bbSquare.modelMat = glm.translate(glm.mat4(1), playerPos)
       
-    follow_behind(camTarget, playerPos + glm.vec3(0, 0.5, 0), delta * 20, 0)
-    follow_behind_xz(camPos, camTarget, 1, 3)
+    camTarget += (delta * 20 if delta * 20 < 1 else 1) * follow_behind(camTarget, playerPos + glm.vec3(0, 0.5, 0), 0)
+    camPos.xz += follow_behind_xz(camPos, camTarget, 3)
     
     for i in range(len(grapeOverlords)):
       grapeOverlord = grapeOverlords[i]
