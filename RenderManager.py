@@ -1,8 +1,10 @@
 from OpenGL.GL import *
 import glm
+import numpy
 
 from Renderer import Renderer
 from RenderObject import RenderObject
+from Texture import Texture
 
 maxObjsPerVao = 1024
 renderDistance = 64
@@ -15,6 +17,7 @@ class VAO:
 class Layer:
   def __init__(self, projectionId: int, distanceCull: bool):
     self.vaos: dict[int, VAO] = {}
+    self.customProjection: glm.mat4 = None
     self.projectionId = projectionId
     self.distanceCull = distanceCull
 
@@ -29,10 +32,12 @@ class RenderManager:
     )
     self.camPos = glm.vec3(0)
 
-  def add_object(self, obj: RenderObject, layerId: int = 1):
+  def add_object(self, obj: RenderObject, layer: int|Layer = 1):
     vaoId: int = obj.shape.vao
     program: str = obj.program
-    vaos: dict[int, VAO] = self.layers[layerId].vaos
+    if type(layer) == int:
+      layer = self.layers[layer]
+    vaos: dict[int, VAO] = layer.vaos
     if vaoId not in vaos:
       vaos[vaoId] = VAO()
     vaos[vaoId].objCount += 1
@@ -54,7 +59,10 @@ class RenderManager:
       programs: dict[str, list[RenderObject]] = vaos[vao].programs
       for program in programs:
         self.renderer.swap_program(program)
-        self.renderer.set_uniform("projMat", self.renderer.screenSizer.get_projection(layer.projectionId))
+        if layer.customProjection == None:
+          self.renderer.set_uniform("projMat", self.renderer.screenSizer.get_projection(layer.projectionId))
+        else:
+          self.renderer.set_uniform("projMat", layer.customProjection)
         objs: list[RenderObject] = programs[program]
         toRender = len(objs)
         if maxObjs < toRender:
@@ -68,3 +76,24 @@ class RenderManager:
           if layer.distanceCull and (glm.distance(glm.vec3(obj.modelMat[3]), self.camPos) > renderDistance):
             continue
           obj.draw()
+
+  def draw_layer_onto_texture(self, layer: Layer, texture: Texture, clear: bool = True):
+    fbo = glGenFramebuffers(1)
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo)
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0)
+
+    rbo = glGenRenderbuffers(1)
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, texture.size[0], texture.size[1])
+    glBindRenderbuffer(GL_RENDERBUFFER, 0)
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo)
+
+    glViewport(0, 0, texture.size[0], texture.size[1])
+    if clear:
+      glClearColor(1, 0, 1, 1)
+      glClear(GL_COLOR_BUFFER_BIT)
+    glClear(GL_DEPTH_BUFFER_BIT)
+    self.draw_layer(layer)
+    glBindFramebuffer(GL_FRAMEBUFFER, 0)
+    glViewport(0, 0, self.renderer.screenSizer.size[0], self.renderer.screenSizer.size[1])
+    glDeleteFramebuffers(1, numpy.array(fbo))

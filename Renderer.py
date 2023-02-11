@@ -3,6 +3,8 @@ import glfw
 import glm
 from typing import Any
 
+vSync = True
+
 shaderDir = "shaders/"
 
 uniformTypes = {
@@ -32,7 +34,7 @@ class ScreenSizer:
     }
 
   def get_projection(self, type: int) -> glm.mat4:
-    return self.projMats[type]
+    return self.projMats[type] if type >= 0 else glm.mat4(1)
 
   def frame_buffer_size_callback(self, window, width, height):
     if width != 0 and height != 0:
@@ -57,7 +59,7 @@ class Renderer:
     
     self.window = glfw.create_window(size[0], size[1], "AAAA", None, None)
     glfw.make_context_current(self.window)
-    glfw.swap_interval(1)
+    glfw.swap_interval(1 if vSync else 0)
 
     glfw.set_framebuffer_size_callback(self.window, self.screenSizer.frame_buffer_size_callback)
 

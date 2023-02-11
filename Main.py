@@ -3,7 +3,7 @@ from OpenGL.GL import *
 import glm
 
 from Renderer import Renderer
-from RenderManager import RenderManager
+from RenderManager import RenderManager, Layer
 import RenderObject
 from Input import Input
 from Texture import Texture
@@ -67,26 +67,27 @@ def main():
   bbSquare.texture = catTex
   renderManager.add_object(bbSquare)
 
+  text = RenderObject.SquareUI(renderer)
   letters: list[RenderObject.SquareUI] = []
-  text = (0, 12, 14, 6, 20, 18)
-  colors = (
-    glm.vec3(1, 0, 0.5),
-    glm.vec3(0, 1, 0),
-    glm.vec3(0.5, 0, 1),
-    glm.vec3(1, 0, 0),
-    glm.vec3(0, 0.5, 1),
-    glm.vec3(0, 1, 0.5)
-  )
-  for i in range(len(text)):
-    index = text[i]
+  letterIds = (64, 3, 0, 13, 6, 4, 17, 64)
+  color = glm.vec4(1, 0, 0, 1)
+  textTex = Texture(32 * len(letterIds), 32)
+  text.texture = textTex
+  textLayer = Layer(-1, False)
+  textLayer.customProjection = glm.ortho(0, 32 * len(letterIds), 0, 32, -100, 100)
+  for i in range(len(letterIds)):
+    index = letterIds[i]
     letter = RenderObject.SquareUI(renderer)
     letters.append(letter)
-    letter.modelMat = glm.translate(letter.modelMat, glm.vec3(64 + 32 * i, 64, 0))
+    letter.modelMat = glm.translate(letter.modelMat, glm.vec3(16 + 32 * i, 16, 0))
     letter.modelMat = glm.scale(letter.modelMat, glm.vec3(32, 32, 1))
     letter.texture = fontTex
-    letter.colorFilter = glm.vec4(colors[i], 1)
+    letter.colorFilter = color
     letter.texOffsetScale = letter.texture.get_square(index)
-    renderManager.add_object(letter, 2)
+    renderManager.add_object(letter, textLayer)
+  renderManager.draw_layer_onto_texture(textLayer, text.texture)
+  renderManager.add_object(text, 2)
+  text.modelMat = glm.scale(glm.translate(text.modelMat, glm.vec3(400, 400, 0)), glm.vec3(32 * len(letterIds), 32, 1))
 
   grapeOverlords = [RenderObject.SquareUI(renderer) for _ in range(30)]
   for i in range(len(grapeOverlords)):
@@ -202,6 +203,8 @@ def main():
     
     animIndex += 20 * delta
     bbSquare.texOffsetScale = catTex.get_square(int(animIndex) % catTex.frameCount)
+
+    text.colorFilter = glm.vec4(1, 1, 1, 0.5 + glm.sin(glfw.get_time() * 4) / 2)
 
     renderManager.camPos = camPos
     viewMat = glm.lookAt(
