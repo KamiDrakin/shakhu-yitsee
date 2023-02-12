@@ -9,19 +9,23 @@ from Input import Input
 from Texture import Texture
 from SheetTexture import SheetTexture
 
-def follow_behind_xz(pos: glm.vec3, dest: glm.vec3, desDist: float) -> glm.vec2:
+def follow_behind_xz(pos: glm.vec3, dest: glm.vec3, desDist: float, accelerate: bool) -> glm.vec2:
   diff = dest - pos
   if glm.length(diff.xz) == desDist and abs(diff.y) == glm.length(diff):
     return glm.vec2(0)
   offset = desDist * glm.normalize(diff)
-  return diff.xz - offset.xz
+  distance = glm.length(diff.xz)
+  accelerator = (desDist - distance) ** 2 / distance if accelerate else 0
+  print(accelerator)
+  return (1 + accelerator) * (diff.xz - offset.xz)
 
-def follow_behind(pos: glm.vec3, dest: glm.vec3, desDist: float) -> glm.vec3:
+def follow_behind(pos: glm.vec3, dest: glm.vec3, desDist: float, accelerate: bool) -> glm.vec3:
   diff = dest - pos
   if glm.length(diff) == desDist:
     return glm.vec3(0)
   offset = desDist * glm.normalize(diff)
-  return diff - offset
+  accelerator = (desDist - glm.length(diff)) ** 2 / glm.length(diff) if accelerate else 0
+  return (1 + accelerator) * (diff - offset)
 
 def main():
   screenSize: (int) = (800, 600)
@@ -183,8 +187,8 @@ def main():
     
     bbSquare.modelMat = glm.translate(glm.mat4(1), playerPos)
       
-    camTarget += (delta * 20 if delta * 20 < 1 else 1) * follow_behind(camTarget, playerPos + glm.vec3(0, 0.5, 0), 0)
-    camPos.xz += follow_behind_xz(camPos, camTarget, 3)
+    camTarget += (delta * 20 if delta * 20 < 1 else 1) * follow_behind(camTarget, playerPos + glm.vec3(0, 0.5, 0), 0, False)
+    camPos.xz += follow_behind_xz(camPos, camTarget, 3, True)
     
     for i in range(len(grapeOverlords)):
       grapeOverlord = grapeOverlords[i]
